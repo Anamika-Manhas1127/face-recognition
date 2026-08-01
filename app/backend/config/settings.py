@@ -14,13 +14,20 @@ STATIC_DIR = FRONTEND_DIR / "static"
 TEMPLATES_DIR = FRONTEND_DIR / "templates"
 
 # Upload and Database Directories
-UPLOAD_DIR = BASE_DIR / "uploads"
+if os.environ.get("VERCEL"):
+    UPLOAD_DIR = Path("/tmp/uploads")
+    DATABASE_DIR = Path("/tmp/database")
+    LOGS_DIR = Path("/tmp/logs")
+    MODELS_DIR = Path("/tmp/models")
+else:
+    UPLOAD_DIR = BASE_DIR / "uploads"
+    DATABASE_DIR = BASE_DIR / "database"
+    LOGS_DIR = BASE_DIR / "logs"
+    MODELS_DIR = BASE_DIR / "models"
+
 REGISTERED_FACES_DIR = UPLOAD_DIR / "registered_faces"
 HISTORY_SCREENSHOTS_DIR = UPLOAD_DIR / "history_screenshots"
 TEMP_DIR = UPLOAD_DIR / "temp"
-DATABASE_DIR = BASE_DIR / "database"
-LOGS_DIR = BASE_DIR / "logs"
-MODELS_DIR = BASE_DIR / "models"
 
 # Ensure all directories exist
 for directory in [
