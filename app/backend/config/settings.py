@@ -50,6 +50,10 @@ class Settings:
     PORT: int = 8000
     DEBUG: bool = True
     
+    # Path attributes
+    STATIC_DIR = STATIC_DIR
+    TEMPLATES_DIR = TEMPLATES_DIR
+    
     # DB Settings
     DATABASE_URL: str = f"sqlite:///{DATABASE_DIR}/vision_system.db"
     
