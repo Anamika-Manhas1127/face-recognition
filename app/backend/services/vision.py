@@ -1,4 +1,3 @@
-import cv2
 import numpy as np
 import os
 import json
@@ -9,10 +8,19 @@ from sqlalchemy.orm import Session
 from app.backend.config.settings import settings
 from app.backend.database.models import RegisteredFace
 
+# Try importing Pillow image libraries (always available)
+from PIL import Image, ImageDraw
+
+# Try importing OpenCV
+try:
+    import cv2
+    HAS_CV2 = True
+except ImportError:
+    HAS_CV2 = False
+
 # Try importing AI vision libraries
 try:
     import torch
-    from PIL import Image
     import torchvision.transforms as transforms
     from facenet_pytorch import MTCNN, InceptionResnetV1
     from ultralytics import YOLO
@@ -22,7 +30,7 @@ except ImportError:
 
 class VisionService:
     def __init__(self):
-        # Check if we should force simulation mode (useful on serverless platforms like Vercel)
+        # Force simulation mode if deep learning dependencies are missing or running on Vercel
         self.is_simulation = not HAS_AI or os.environ.get("VERCEL") is not None
         
         if self.is_simulation:
@@ -42,7 +50,7 @@ class VisionService:
                 transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
             ])
         
-        # Face registry cache
+        # Face cache
         self.face_cache = []
         self.cache_loaded = False
 
@@ -83,7 +91,6 @@ class VisionService:
         self.face_cache = []
         for f in faces:
             try:
-                # Store embeddings if available, else store metadata only for simulation matching
                 emb = None
                 if not self.is_simulation:
                     emb = np.array(f.get_embedding(), dtype=np.float32)
@@ -95,10 +102,10 @@ class VisionService:
                     "embedding": emb
                 })
             except Exception as e:
-                print(f"Error loading face embedding for {f.name}: {e}")
+                print(f"Error loading face cache embedding: {e}")
         
         self.cache_loaded = True
-        print(f"Loaded {len(self.face_cache)} faces into cache (Simulation: {self.is_simulation}).")
+        print(f"Loaded {len(self.face_cache)} faces (Simulation: {self.is_simulation}).")
 
     def add_to_face_cache(self, face_id: int, name: str, employee_id: str, embedding: list):
         """Adds or updates a face embedding in the cache."""
@@ -110,8 +117,8 @@ class VisionService:
             "embedding": emb_np
         })
 
-    def draw_rounded_rect(self, img, pt1, pt2, color, thickness, r=12):
-        """Draws a rounded rectangle border for bounding boxes."""
+    def draw_rounded_rect_cv2(self, img, pt1, pt2, color, thickness, r=12):
+        """Draws rounded rectangle using OpenCV."""
         x1, y1 = pt1
         x2, y2 = pt2
         w = abs(x2 - x1)
@@ -131,8 +138,38 @@ class VisionService:
         cv2.line(img, (x1, y1 + r), (x1, y2 - r), color, thickness, lineType=cv2.LINE_AA)
         cv2.line(img, (x2, y1 + r), (x2, y2 - r), color, thickness, lineType=cv2.LINE_AA)
 
+    def draw_annotations_pil(self, frame_bgr: np.ndarray, detections: list, box_thickness: int) -> np.ndarray:
+        """Annotates frames using PIL/Pillow for environments without OpenCV system libraries."""
+        # Convert BGR numpy to RGB PIL Image
+        frame_rgb = frame_bgr[:, :, ::-1]
+        img_pil = Image.fromarray(frame_rgb)
+        draw = ImageDraw.Draw(img_pil)
+        
+        # Colors (RGB format for PIL)
+        color_blue = (167, 216, 255) # Pastel Blue for faces
+        color_pink = (255, 199, 221) # Pastel Pink for objects
+        
+        for d in detections:
+            x1, y1, x2, y2 = d["box"]
+            color = color_blue if d["type"] == "face" else color_pink
+            text = f"{d['label']} ({int(d['confidence'])}%)"
+            
+            # Draw rounded box
+            draw.rounded_rectangle([x1, y1, x2, y2], radius=12, outline=color, width=box_thickness)
+            
+            # Draw label tag background
+            th = 12
+            tw = len(text) * 7
+            draw.rectangle([x1, y1 - th - 10, x1 + tw + 15, y1], fill=color)
+            
+            # Draw text
+            draw.text((x1 + 8, y1 - th - 6), text, fill=(40, 40, 40))
+            
+        # Convert RGB PIL back to BGR numpy array
+        return np.array(img_pil)[:, :, ::-1]
+
     def recognize_face(self, face_embedding: np.ndarray) -> tuple[str, float]:
-        """Compares target face embedding to cached registry."""
+        """Compares target embedding to registry."""
         if self.is_simulation or not self.face_cache:
             return "Unknown Person", 0.0
 
@@ -154,9 +191,8 @@ class VisionService:
             return "Unknown Person", unknown_confidence
 
     def get_embedding_from_image(self, img_np: np.ndarray) -> list | None:
-        """Helper to extract a single face embedding. Generates dummy vector in simulation mode."""
+        """Extracts face embedding (generates dummy list in simulation)."""
         if self.is_simulation:
-            # Generate a reproducible mock 512-dimension vector so SQLite registration succeeds
             return list(np.random.normal(0, 0.1, 512).tolist())
 
         self.load_models()
@@ -196,7 +232,7 @@ class VisionService:
         enable_objects: bool = None,
         box_thickness: int = None
     ) -> tuple[np.ndarray, list[dict]]:
-        """Main processing pipeline (Real AI or Vercel Simulation fallback)."""
+        """Main processing pipeline (real AI or safe simulation)."""
         self.load_face_cache(db)
         
         conf_threshold = conf_threshold or settings.OBJECT_CONFIDENCE_THRESHOLD
@@ -204,29 +240,21 @@ class VisionService:
         enable_objects = settings.ENABLE_OBJECT_DETECTION if enable_objects is None else enable_objects
         box_thickness = box_thickness or settings.BOX_THICKNESS
 
-        # Colors (BGR format)
-        pastel_blue = (255, 216, 167)  # #A7D8FF for faces
-        pastel_pink = (221, 199, 255)  # #FFC7DD for objects
-
-        annotated_frame = frame.copy()
         h_img, w_img, _ = frame.shape
         detections = []
 
         # --- SIMULATION FALLBACK MODE ---
         if self.is_simulation:
-            # 1. Simulate Face Recognition
+            # 1. Simulate Face Box
             if enable_recognition:
-                # Position a face box centrally in the frame
                 fx1 = int(w_img * 0.35)
                 fy1 = int(h_img * 0.20)
                 fx2 = int(w_img * 0.65)
                 fy2 = int(h_img * 0.60)
                 
-                # Assign one of the registered cache names if available, else Unknown
                 name = "Unknown Person"
                 conf = 72.0
                 if self.face_cache:
-                    # Choose a registered user from cache
                     name = self.face_cache[0]["name"]
                     conf = 98.0
 
@@ -236,18 +264,9 @@ class VisionService:
                     "box": [fx1, fy1, fx2, fy2],
                     "confidence": conf
                 })
-                
-                self.draw_rounded_rect(annotated_frame, (fx1, fy1), (fx2, fy2), pastel_blue, box_thickness)
-                text = f"{name} ({int(conf)}%)"
-                font = cv2.FONT_HERSHEY_SIMPLEX
-                font_scale = settings.FONT_SCALE
-                (tw, th), _ = cv2.getTextSize(text, font, font_scale, 1)
-                cv2.rectangle(annotated_frame, (fx1, fy1 - th - 10), (fx1 + tw + 15, fy1), pastel_blue, -1)
-                cv2.putText(annotated_frame, text, (fx1 + 8, fy1 - 5), font, font_scale, (60, 40, 20), 1, cv2.LINE_AA)
 
-            # 2. Simulate Object Detection
+            # 2. Simulate Object Box
             if enable_objects:
-                # Position an object box (e.g. laptop or chair)
                 ox1 = int(w_img * 0.15)
                 oy1 = int(h_img * 0.65)
                 ox2 = int(w_img * 0.85)
@@ -263,21 +282,19 @@ class VisionService:
                     "confidence": conf
                 })
 
-                self.draw_rounded_rect(annotated_frame, (ox1, oy1), (ox2, oy2), pastel_pink, box_thickness)
-                text = f"{label} ({int(conf)}%)"
-                font = cv2.FONT_HERSHEY_SIMPLEX
-                font_scale = settings.FONT_SCALE
-                (tw, th), _ = cv2.getTextSize(text, font, font_scale, 1)
-                cv2.rectangle(annotated_frame, (ox1, oy1 - th - 10), (ox1 + tw + 15, oy1), pastel_pink, -1)
-                cv2.putText(annotated_frame, text, (ox1 + 8, oy1 - 5), font, font_scale, (40, 20, 60), 1, cv2.LINE_AA)
-
+            # Annotate using PIL (safe for Vercel)
+            annotated_frame = self.draw_annotations_pil(frame, detections, box_thickness)
             return annotated_frame, detections
 
-        # --- REAL AI DEEP LEARNING MODE ---
+        # --- REAL AI MODE (OpenCV and PyTorch available) ---
         self.load_models()
-        face_boxes = []
+        annotated_frame = frame.copy()
+        
+        # BGR Bounding Box Colors
+        pastel_blue = (255, 216, 167)  # faces
+        pastel_pink = (221, 199, 255)  # objects
 
-        # 1. Run face detection & recognition
+        # 1. Run face detection
         if enable_recognition:
             img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             boxes, probs = self.mtcnn.detect(img_rgb)
@@ -291,9 +308,6 @@ class VisionService:
                     x1, y1 = max(0, x1), max(0, y1)
                     x2, y2 = min(w_img, x2), min(h_img, y2)
                     
-                    face_boxes.append((x1, y1, x2, y2))
-                    
-                    # Compute embedding
                     face_crop = img_rgb[y1:y2, x1:x2]
                     if face_crop.size == 0:
                         continue
@@ -316,15 +330,15 @@ class VisionService:
                         "box": [x1, y1, x2, y2]
                     })
 
-                    self.draw_rounded_rect(annotated_frame, (x1, y1), (x2, y2), pastel_blue, box_thickness)
+                    self.draw_rounded_rect_cv2(annotated_frame, (x1, y1), (x2, y2), pastel_blue, box_thickness)
                     text = f"{name} ({int(conf)}%)"
                     font = cv2.FONT_HERSHEY_SIMPLEX
                     font_scale = settings.FONT_SCALE
                     (tw, th), _ = cv2.getTextSize(text, font, font_scale, 1)
-                    cv2.rectangle(annotated_frame, (x1, y1 - th - 10), (x1 + tw + 15, x1), pastel_blue, -1)
+                    cv2.rectangle(annotated_frame, (x1, y1 - th - 10), (x1 + tw + 15, y1), pastel_blue, -1)
                     cv2.putText(annotated_frame, text, (x1 + 8, y1 - 5), font, font_scale, (60, 40, 20), 1, cv2.LINE_AA)
 
-        # 2. Run object detection (YOLOv11)
+        # 2. Run object detection
         if enable_objects:
             yolo_results = self.yolo_model.predict(source=frame, conf=conf_threshold, verbose=False)
             
@@ -335,7 +349,7 @@ class VisionService:
                     label = self.yolo_model.names[cls_id]
                     conf = float(box.conf[0]) * 100
                     
-                    # Suppress YOLO body boxes on humans to prioritize face boxes
+                    # Skip person tags
                     if label in ["person", "human"]:
                         continue
 
@@ -351,7 +365,7 @@ class VisionService:
                         "box": [x1, y1, x2, y2]
                     })
 
-                    self.draw_rounded_rect(annotated_frame, (x1, y1), (x2, y2), pastel_pink, box_thickness)
+                    self.draw_rounded_rect_cv2(annotated_frame, (x1, y1), (x2, y2), pastel_pink, box_thickness)
                     text = f"{label.capitalize()} ({int(conf)}%)"
                     font = cv2.FONT_HERSHEY_SIMPLEX
                     font_scale = settings.FONT_SCALE

@@ -29,14 +29,20 @@ REGISTERED_FACES_DIR = UPLOAD_DIR / "registered_faces"
 HISTORY_SCREENSHOTS_DIR = UPLOAD_DIR / "history_screenshots"
 TEMP_DIR = UPLOAD_DIR / "temp"
 
-# Ensure all directories exist
+# Ensure all writable directories exist
 for directory in [
     UPLOAD_DIR, REGISTERED_FACES_DIR, HISTORY_SCREENSHOTS_DIR,
-    TEMP_DIR, DATABASE_DIR, LOGS_DIR, MODELS_DIR,
-    STATIC_DIR, TEMPLATES_DIR,
-    STATIC_DIR / "css", STATIC_DIR / "js", STATIC_DIR / "images"
+    TEMP_DIR, DATABASE_DIR, LOGS_DIR, MODELS_DIR
 ]:
     directory.mkdir(parents=True, exist_ok=True)
+
+# Only ensure static directories exist on local machine (read-only on Vercel)
+if not os.environ.get("VERCEL"):
+    for directory in [
+        STATIC_DIR, TEMPLATES_DIR,
+        STATIC_DIR / "css", STATIC_DIR / "js", STATIC_DIR / "images"
+    ]:
+        directory.mkdir(parents=True, exist_ok=True)
 
 class Settings:
     # App General Settings

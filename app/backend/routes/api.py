@@ -7,10 +7,17 @@ import uuid
 import time
 import json
 import base64
-import cv2
 import numpy as np
 import pandas as pd
 import io
+from PIL import Image
+
+# Try importing cv2 safely
+try:
+    import cv2
+    HAS_CV2 = True
+except ImportError:
+    HAS_CV2 = False
 
 from app.backend.config.settings import settings
 from app.backend.database.connection import get_db, SessionLocal
@@ -18,6 +25,14 @@ from app.backend.database.models import RegisteredFace
 from app.backend.services.vision import vision_service
 from app.backend.utils.helpers import get_system_status, base64_to_cv2, cv2_to_base64, generate_session_id
 from app.backend.services import db_service
+
+def save_image_file(path, img_bgr):
+    """Save BGR numpy array image to file safely using PIL fallback."""
+    if HAS_CV2:
+        cv2.imwrite(str(path), img_bgr)
+    else:
+        rgb = img_bgr[:, :, ::-1]
+        Image.fromarray(rgb).save(str(path))
 
 router = APIRouter()
 
@@ -48,8 +63,17 @@ async def detect_image(
 
     # Read image
     contents = await file.read()
-    nparr = np.frombuffer(contents, np.uint8)
-    frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    if HAS_CV2:
+        nparr = np.frombuffer(contents, np.uint8)
+        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    else:
+        try:
+            img = Image.open(io.BytesIO(contents))
+            if img.mode != "RGB":
+                img = img.convert("RGB")
+            frame = np.array(img)[:, :, ::-1]
+        except Exception:
+            frame = None
     
     if frame is None:
         raise HTTPException(status_code=400, detail="Failed to decode image file.")
@@ -65,7 +89,7 @@ async def detect_image(
     # Save screenshot to history if anything detected
     screenshot_filename = f"upload_{uuid.uuid4().hex[:12]}_{int(time.time())}.jpg"
     screenshot_path = settings.HISTORY_SCREENSHOTS_DIR / screenshot_filename
-    cv2.imwrite(str(screenshot_path), annotated_frame)
+    save_image_file(screenshot_path, annotated_frame)
 
     person_names = [d["label"] for d in detections if d["type"] == "face"]
     object_names = [d["label"] for d in detections if d["type"] == "object"]
@@ -109,8 +133,17 @@ async def register_face(
 
     if image_file:
         contents = await image_file.read()
-        nparr = np.frombuffer(contents, np.uint8)
-        img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        if HAS_CV2:
+            nparr = np.frombuffer(contents, np.uint8)
+            img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        else:
+            try:
+                img = Image.open(io.BytesIO(contents))
+                if img.mode != "RGB":
+                    img = img.convert("RGB")
+                img_np = np.array(img)[:, :, ::-1]
+            except Exception:
+                img_np = None
     elif image_base64:
         try:
             img_np = base64_to_cv2(image_base64)
@@ -131,7 +164,7 @@ async def register_face(
     # Save registered photo to disk
     photo_filename = f"face_{uuid.uuid4().hex[:12]}_{int(time.time())}.jpg"
     photo_path = settings.REGISTERED_FACES_DIR / photo_filename
-    cv2.imwrite(str(photo_path), img_np)
+    save_image_file(photo_path, img_np)
 
     # Write to Database
     db_face = db_service.create_registered_face(
@@ -383,7 +416,7 @@ async def websocket_stream(websocket: WebSocket, db: Session = Depends(get_db)):
             if data_json.get("save_history") and len(detections) > 0:
                 screenshot_filename = f"ws_{session_id}_{int(time.time() * 1000)}.jpg"
                 screenshot_path = settings.HISTORY_SCREENSHOTS_DIR / screenshot_filename
-                cv2.imwrite(str(screenshot_path), frame)
+                save_image_file(screenshot_path, frame)
                 
                 person_names = [d["label"] for d in detections if d["type"] == "face"]
                 object_names = [d["label"] for d in detections if d["type"] == "object"]
@@ -524,6 +557,11 @@ async def upload_video(
     file: UploadFile = File(...)
 ):
     """Accepts mp4/avi/mov files, writes locally, and starts asynchronous annotation."""
+    if not HAS_CV2 or os.environ.get("VERCEL") is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="Video processing is not supported in Vercel's serverless runtime. Please host the Docker container on Render to activate the full video processing pipeline."
+        )
     filename = file.filename.lower()
     if not (filename.endswith(('.mp4', '.avi', '.mov', '.mkv'))):
         raise HTTPException(status_code=400, detail="Invalid video format. Supported: MP4, AVI, MOV, MKV")
