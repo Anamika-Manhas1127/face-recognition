@@ -9,9 +9,9 @@ templates = Jinja2Templates(directory=str(settings.TEMPLATES_DIR))
 @router.get("/", response_class=HTMLResponse)
 async def read_landing(request: Request):
     """Serve the premium landing page."""
-    return templates.TemplateResponse("landing.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="landing.html")
 
 @router.get("/dashboard", response_class=HTMLResponse)
 async def read_dashboard(request: Request):
     """Serve the modern glassmorphism dashboard."""
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="dashboard.html")
