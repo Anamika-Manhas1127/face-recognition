@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 import time
+import os
 
 from app.backend.config.settings import settings
 from app.backend.database.models import init_db
@@ -60,9 +61,14 @@ async def startup_event():
         
     print("AI Vision system is ready.")
 
-# Mount Static Assets & Upload Directory
-app.mount("/static", StaticFiles(directory=str(settings.STATIC_DIR)), name="static")
-app.mount("/uploads", StaticFiles(directory=str(settings.UPLOAD_DIR)), name="uploads")
+# Mount Static Assets & Writable Upload Directory Safely
+if os.path.exists(settings.STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=str(settings.STATIC_DIR)), name="static")
+else:
+    print(f"Warning: Static directory '{settings.STATIC_DIR}' not found. Serving handled by CDN/Vercel.")
+
+if os.path.exists(settings.UPLOAD_DIR):
+    app.mount("/uploads", StaticFiles(directory=str(settings.UPLOAD_DIR)), name="uploads")
 
 # Include Routers
 app.include_router(views.router)
