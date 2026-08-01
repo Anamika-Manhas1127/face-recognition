@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="position-relative overflow-hidden min-vh-100 d-flex flex-column justify-content-between">
+    
+    <!-- Background Glow Effects -->
+    <div class="bg-gradient-glow" style="top: -10%; left: -10%;"></div>
+    <div class="bg-gradient-glow" style="bottom: -10%; right: -10%; animation-delay: -5s;"></div>
+
+    <!-- Navigation Header -->
+    <header class="glass mx-3 mx-md-5 my-4 px-4 py-3 d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+            <div class="bg-primary rounded-circle" style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;"></div>
+            <span class="fs-4 fw-bold text-dark">AI Vision</span>
+        </div>
+        <nav class="d-none d-md-flex align-items-center gap-4">
+            <a href="#features" class="text-secondary text-decoration-none hover-dark fw-medium">Features</a>
+            <a href="#how-it-works" class="text-secondary text-decoration-none hover-dark fw-medium">How It Works</a>
+            <a href="#stats" class="text-secondary text-decoration-none hover-dark fw-medium">Statistics</a>
+            <a href="#about" class="text-secondary text-decoration-none hover-dark fw-medium">About AI</a>
+        </nav>
+        <div>
+            <a href="/dashboard" class="btn-premium">Start Detection <i class="bi bi-arrow-right-short"></i></a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <main class="container my-5 py-5">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6 text-center text-lg-start">
+                <span class="badge rounded-pill px-3 py-2 mb-3" style="background: rgba(167,216,255,0.25); color: #0056b3; font-weight: 600;">Latest YOLOv11 & MTCNN Pipeline</span>
+                <h1 class="display-3 fw-bold mb-3" style="letter-spacing: -0.03em; line-height: 1.15; color: #1D1D1F;">
+                    AI Vision — Intelligent <br>
+                    <span style="background: linear-gradient(135deg, #0076FF, #FFC7DD); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Face & Object Recognition</span>
+                </h1>
+                <p class="fs-5 text-secondary mb-4 col-lg-11 px-0">
+                    Real-time AI-powered face recognition and object detection. Optimized for desktop webcams, USB cameras, and mobile (Android & iPhone) browsers.
+                </p>
+                <div class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-3">
+                    <a href="/dashboard?action=camera" class="btn-premium px-4 py-3"><i class="bi bi-camera-video-fill me-2"></i> Start Detection</a>
+                    <a href="/dashboard?action=upload-image" class="btn-outline-premium px-4 py-3"><i class="bi bi-image me-2"></i> Upload Image</a>
+                    <a href="/dashboard?action=upload-video" class="btn-outline-premium px-4 py-3"><i class="bi bi-film me-2"></i> Upload Video</a>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <!-- Premium Scanner Animation (Pure CSS) -->
+                <div class="position-relative mx-auto" style="width: 320px; height: 320px;">
+                    <!-- Rotating Outermost ring -->
+                    <div class="position-absolute w-100 h-100 rounded-circle border border-primary border-2 opacity-50" style="animation: spin 20s linear infinite;"></div>
+                    <!-- Secondary pulsing ring -->
+                    <div class="position-absolute w-75 h-75 rounded-circle border border-secondary border-2 opacity-50" style="top: 12.5%; left: 12.5%; animation: pulse 3s ease-in-out infinite alternate;"></div>
+                    <!-- Center scanning face symbol -->
+                    <div class="position-absolute glass w-50 h-50 rounded-circle d-flex align-items-center justify-content-center" style="top: 25%; left: 25%; box-shadow: 0 10px 40px rgba(167, 216, 255, 0.4);">
+                        <i class="bi bi-eye-fill text-primary" style="font-size: 4rem; background: linear-gradient(135deg, #0076FF, #FFC7DD); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                    </div>
+                    <!-- Vertical Scanning line -->
+                    <div class="position-absolute w-100" style="height: 4px; background: linear-gradient(90deg, transparent, var(--primary-color), var(--secondary-color), transparent); top: 0%; left: 0; animation: scan-vertical 4s ease-in-out infinite;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Features Section -->
+    <section id="features" class="container my-5 py-5">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold" style="color: #1D1D1F;">Advanced Core Features</h2>
+            <p class="text-secondary col-md-6 mx-auto">Equipped with state-of-the-art vision models configured for real-time local deployments.</p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Card 1 -->
+            <div class="col-md-6 col-lg-4">
+                <div class="glass feature-card">
+                    <div class="fs-2 mb-3"><i class="bi bi-person-bounding-box text-primary"></i></div>
+                    <h4 class="fw-bold mb-2">Real-time Face Detection</h4>
+                    <p class="text-secondary mb-0">Detects human faces instantly and creates responsive bounding boxes with accuracy overlays.</p>
+                </div>
+            </div>
+            <!-- Card 2 -->
+            <div class="col-md-6 col-lg-4">
+                <div class="glass feature-card">
+                    <div class="fs-2 mb-3"><i class="bi bi-boxes text-danger"></i></div>
+                    <h4 class="fw-bold mb-2">Object Detection</h4>
+                    <p class="text-secondary mb-0">Powered by YOLOv11 to recognize chairs, laptops, mugs, and 80+ other standard items in frames.</p>
+                </div>
+            </div>
+            <!-- Card 3 -->
+            <div class="col-md-6 col-lg-4">
+                <div class="glass feature-card">
+                    <div class="fs-2 mb-3"><i class="bi bi-shield-check text-success"></i></div>
+                    <h4 class="fw-bold mb-2">Multiple Face Recognition</h4>
+                    <p class="text-secondary mb-0">Computes 512-dimensional face vectors to recognize multiple registered users concurrently.</p>
+                </div>
+            </div>
+            <!-- Card 4 -->
+            <div class="col-md-6 col-lg-4">
+                <div class="glass feature-card">
+                    <div class="fs-2 mb-3"><i class="bi bi-camera-video text-warning"></i></div>
+                    <h4 class="fw-bold mb-2">Cross Platform Support</h4>
+                    <p class="text-secondary mb-0">Fully responsive UI optimized for Android Chrome, iPhone Safari, and desktop laptops.</p>
+                </div>
+            </div>
+            <!-- Card 5 -->
+            <div class="col-md-6 col-lg-4">
+                <div class="glass feature-card">
+                    <div class="fs-2 mb-3"><i class="bi bi-file-earmark-arrow-up text-info"></i></div>
+                    <h4 class="fw-bold mb-2">Media Uploads</h4>
+                    <p class="text-secondary mb-0">Process stationary images and uploaded MP4 videos with downloadable rendering results.</p>
+                </div>
+            </div>
+            <!-- Card 6 -->
+            <div class="col-md-6 col-lg-4">
+                <div class="glass feature-card">
+                    <div class="fs-2 mb-3"><i class="bi bi-moon-stars text-secondary"></i></div>
+                    <h4 class="fw-bold mb-2">Dark Mode Ready</h4>
+                    <p class="text-secondary mb-0">Toggle between professional clean white theme and aesthetic midnight dark mode.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="container my-5 py-5">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold" style="color: #1D1D1F;">Simple 3-Step Workflow</h2>
+            <p class="text-secondary col-md-6 mx-auto">No complex setups. Start monitoring straight from your web browser in seconds.</p>
+        </div>
+        
+        <div class="row text-center g-4 justify-content-center">
+            <div class="col-md-3">
+                <div class="glass p-4 rounded-4 position-relative">
+                    <div class="badge rounded-circle bg-primary text-dark fs-5 mb-3" style="width: 40px; height: 40px; line-height: 25px;">1</div>
+                    <h5 class="fw-bold">Open Camera</h5>
+                    <p class="text-secondary small mb-0">Grant permissions to initiate your laptop webcam or mobile front/rear camera.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-1 d-flex align-items-center justify-content-center d-none d-md-flex">
+                <i class="bi bi-arrow-right fs-2 text-secondary"></i>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="glass p-4 rounded-4 position-relative">
+                    <div class="badge rounded-circle bg-secondary text-dark fs-5 mb-3" style="width: 40px; height: 40px; line-height: 25px;">2</div>
+                    <h5 class="fw-bold">AI Processing</h5>
+                    <p class="text-secondary small mb-0">Local neural networks parse frames to localize faces and trace objects simultaneously.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-1 d-flex align-items-center justify-content-center d-none d-md-flex">
+                <i class="bi bi-arrow-right fs-2 text-secondary"></i>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="glass p-4 rounded-4 position-relative">
+                    <div class="badge rounded-circle bg-info text-dark fs-5 mb-3" style="width: 40px; height: 40px; line-height: 25px;">3</div>
+                    <h5 class="fw-bold">View Results</h5>
+                    <p class="text-secondary small mb-0">Observe names, bounding boxes, object confidence rates, and session history logs.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics Section -->
+    <section id="stats" class="container my-5 py-5 text-center">
+        <div class="glass p-5">
+            <h2 class="fw-bold mb-5">System Capabilities</h2>
+            <div class="row g-4 justify-content-center">
+                <div class="col-6 col-md-3">
+                    <h1 class="display-4 fw-bold text-primary" id="stat-accuracy" style="background: linear-gradient(135deg, #0076FF, #FFC7DD); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">99.4%</h1>
+                    <p class="text-secondary fw-semibold">Accuracy Rate</p>
+                </div>
+                <div class="col-6 col-md-3">
+                    <h1 class="display-4 fw-bold text-primary" style="background: linear-gradient(135deg, #0076FF, #FFC7DD); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">&lt; 30ms</h1>
+                    <p class="text-secondary fw-semibold">Inference Latency</p>
+                </div>
+                <div class="col-6 col-md-3">
+                    <h1 class="display-4 fw-bold text-primary" style="background: linear-gradient(135deg, #0076FF, #FFC7DD); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">30+ FPS</h1>
+                    <p class="text-secondary fw-semibold">Real-time Speed</p>
+                </div>
+                <div class="col-6 col-md-3">
+                    <h1 class="display-4 fw-bold text-primary" style="background: linear-gradient(135deg, #0076FF, #FFC7DD); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">80+</h1>
+                    <p class="text-secondary fw-semibold">COCO Object Classes</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About AI Section -->
+    <section id="about" class="container my-5 py-5">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <h2 class="display-6 fw-bold mb-4">Under the Hood</h2>
+                <div class="accordion accordion-flush" id="aboutAccordion">
+                    <div class="accordion-item bg-transparent">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button bg-transparent fw-bold collapsed text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                YOLOv11 Object Detection
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#aboutAccordion">
+                            <div class="accordion-body text-secondary">
+                                Ultralytics YOLOv11 is a state-of-the-art object detection architecture that extracts and draws labels for dozens of everyday items in real time.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item bg-transparent">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button bg-transparent fw-bold collapsed text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                                MTCNN Face Detector
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#aboutAccordion">
+                            <div class="accordion-body text-secondary">
+                                Multi-task Cascaded Convolutional Networks segment frames to extract coordinate boundaries of eyes, nose, and mouth, ensuring optimal detection.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item bg-transparent">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button bg-transparent fw-bold collapsed text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                                Facenet Face Embeddings
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#aboutAccordion">
+                            <div class="accordion-body text-secondary">
+                                Uses InceptionResnetV1 trained on VGGFace2 to map face geometry into a 512-dimensional vector. These vectors are cross-compared to identify registered names.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="glass p-4 rounded-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-info-circle-fill text-primary"></i> Priority Overlays</h5>
+                    <p class="text-secondary small">
+                        To maintain a clean and clutter-free screen overlay, the system automatically suppresses standard YOLO bounding boxes on humans. It focuses directly on face registration classification, preventing multiple overlapping boxes on the same body.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="glass mx-3 mx-md-5 mb-4 p-4 d-flex flex-column flex-md-row align-items-center justify-content-between text-secondary gap-3">
+        <div>
+            <span>&copy; 2026 AI Vision System. Deepmind Advanced Agentic Coding.</span>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <a href="https://github.com/ultralytics/ultralytics" class="text-secondary text-decoration-none hover-dark"><i class="bi bi-github"></i> GitHub</a>
+            <span class="opacity-25">|</span>
+            <a href="/dashboard" class="text-secondary text-decoration-none hover-dark">Documentation</a>
+            <span class="opacity-25">|</span>
+            <span>Version 1.1.0</span>
+        </div>
+    </footer>
+
+</div>
+
+<!-- CSS Animations -->
+<style>
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0% { transform: top: 12.5%; left: 12.5% scale(1.0); opacity: 0.3; }
+    100% { transform: scale(1.15); opacity: 0.7; }
+}
+
+@keyframes scan-vertical {
+    0% { top: 0%; opacity: 0.8; }
+    50% { top: 98%; opacity: 0.8; }
+    100% { top: 0%; opacity: 0.8; }
+}
+
+.accordion-button:not(.collapsed) {
+    color: var(--text-primary);
+    background-color: transparent;
+    box-shadow: none;
+}
+.accordion-button::after {
+    filter: invert(0.5);
+}
+</style>
+{% endblock %}

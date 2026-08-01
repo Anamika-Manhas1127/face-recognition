@@ -1,0 +1,41 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# Python Cache & Compiled Files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Databases
+database/*.db
+database/*.sqlite
+
+# Local Cache & Saved Uploads
+uploads/history_screenshots/*.jpg
+uploads/history_screenshots/*.png
+uploads/registered_faces/*.jpg
+uploads/registered_faces/*.png
+uploads/temp/*.mp4
+uploads/temp/*.avi
+uploads/temp/*.mov
+uploads/temp/input_*
+
+# Models (Cached Deep Learning weights)
+models/yolo11n.pt
+models/*.pt
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
